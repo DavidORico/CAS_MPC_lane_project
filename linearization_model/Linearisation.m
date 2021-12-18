@@ -1,6 +1,6 @@
 %Defining the reference tracking linearised RHS by Taylor expansion around
 %reference
-function [model,A,B] = Linearisation(states,controls)
+function [model,A,B] = Linearisation(states,controls,T)
 syms v; syms delta;
 syms theta; syms x; syms y;
 L = 2;
@@ -10,7 +10,7 @@ x_error = states - reference_states;
 u_error = controls - reference_controls;
 
 %% Jacobian of discrete kinematics
-z = [x+v*cos(theta);y+v*sin(theta);theta+(v/L)*tan(delta)];
+z = [x+v*cos(theta)*T;y+v*sin(theta)*T;theta+(v/L)*tan(delta)*T];
 A = jacobian(z,[x,y,theta]);
 B = jacobian(z,[v,delta]);
 A(1,3) = (-controls(1,1))*sin(states(3,1));
