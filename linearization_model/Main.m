@@ -1,12 +1,10 @@
-clc
-clear all
+function [AM,BM] = statespace(ref_u,ref_x,k)
 %Main function
 %% Initialising variables
-
 sympref('FloatingPointOutput',true)
 syms v; syms delta; syms theta;
 syms x;syms y;
-N =2;
+N =5;
 T = 0.1;
 L = 2;
 
@@ -30,8 +28,7 @@ BM = []; % Expanded B-matrix
 vq = [1,2,3]; q = diag(vq); vr = [1,2]; r = diag(vr);
 Q = [];
 R = [];
-k1 = Linearisation(st, con,T );   % new
-[x_next,a,b] = Linearisation(T/2*k1,con,T); %discretised state-space A/B
+[x_next,a,b] = Linearisation(st,con,T); %discretised state-space A/B
 B0 = zeros(size(b));
 BR =cell(1,N);
 AM = eye(size(a)); % Expanded A-matrix
