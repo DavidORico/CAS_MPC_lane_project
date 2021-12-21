@@ -2,14 +2,10 @@
 clear all
 %basic parameters
 T = 0.1;
-N = 30;
+N = 5;
 u_max = [0.47;
         3.77];
 u_min = -u_max;
-% Q = diag([1 1 0.5]);
-% Q_spec = blkdiag(Q, Q, Q, Q, Q);
-% R = diag([0.1 0.1]);
-% R_spec = blkdiag(R, R, R, R, R);
 
 %create reference trajectory
 x = [-1 -1 0]';
@@ -19,12 +15,13 @@ ref_angle = sin(linspace(-pi, pi, num_reference_points));
 ref_u = [ref_speed; ref_angle];
 ref_x = zeros(3, num_reference_points);
 for k = 1:num_reference_points
-   A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
-        0 1 ref_speed(k)*cos(ref_angle(k))*T;
-        0 0 1];
-   B = [cos(ref_angle(k))*T 0;
-        sin(ref_angle(k))*T 0;
-        0 T];
+   [A,B] = Linearisation(x, ref_u(:, k),1,T);
+   %A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
+   %     0 1 ref_speed(k)*cos(ref_angle(k))*T;
+   %     0 0 1];
+   %B = [cos(ref_angle(k))*T 0;
+   %     sin(ref_angle(k))*T 0;
+   %     0 T];
    ref_x(:, k) = x;
    x = A*x + B*ref_u(:, k);
 end
@@ -33,11 +30,11 @@ plot(ref_x(1,:), ref_x(2, :))
 
 res_x = [];
 res_u = [];
-x = [-0.8 -0.7 0]';
+x = [-1 -0.7 0]';
 tic
 for k = 1:num_reference_points
    %% update the A and B matrix
-   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace(ref_u,ref_x,k,N,T);
+   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u,ref_x,k,N,T);
 %    A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
 %         0 1 ref_speed(k)*cos(ref_angle(k))*T;
 %         0 0 1];
@@ -78,12 +75,14 @@ for k = 1:num_reference_points
    res_u = [res_u, u_min];
 end
 toc
+%TODO better ploting
 figure(2)
 plot(res_x(1,:), res_x(2, :));
 figure(3)
 plot(res_u(1,:));
 figure(4)
 plot(res_u(2,:));
+%TODO plot error
 
 function B_completed = apply_power(A, B, mat)
     B_completed = [];
