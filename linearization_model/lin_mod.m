@@ -25,12 +25,14 @@ for k = 1:num_reference_points
    ref_x(:, k) = x;
    x = A*x + B*ref_u(:, k);
 end
-figure(1)
-plot(ref_x(1,:), ref_x(2, :))
+figure(1);
+plot(ref_x(1,:), ref_x(2, :));
+title('Comparing Paths');
+hold on;
 
 res_x = [];
 res_u = [];
-x = [-1 -0.7 0]';
+x = [-1 -10.7 0]';
 tic
 for k = 1:num_reference_points
    %% update the A and B matrix
@@ -75,14 +77,22 @@ for k = 1:num_reference_points
    res_u = [res_u, u_min];
 end
 toc
-%TODO better ploting
-figure(2)
+%plotting the reference path and the path taken
 plot(res_x(1,:), res_x(2, :));
-figure(3)
+hold off;
+legend('reference path','result path');
+figure(2)
 plot(res_u(1,:));
-figure(4)
+title('Inputs - u');
+hold on;
 plot(res_u(2,:));
-%TODO plot error
+hold off;
+legend('velocity','steering angle');
+%plot error
+figure(3);
+plot(ref_x' - res_x');
+title('Error');
+legend('err of x pos','error of y pos', 'error of heading');
 
 function B_completed = apply_power(A, B, mat)
     B_completed = [];
