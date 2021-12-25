@@ -32,30 +32,11 @@ hold on;
 
 res_x = [];
 res_u = [];
-x = [-1 -10.7 0]';
+x = [-1 -0.7 0]';
 tic
 for k = 1:num_reference_points
    %% update the A and B matrix
    [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u,ref_x,k,N,T);
-%    A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
-%         0 1 ref_speed(k)*cos(ref_angle(k))*T;
-%         0 0 1];
-%    B = [cos(ref_angle(k))*T 0;
-%         sin(ref_angle(k))*T 0;
-%         0 T];
-   %% update the A and B matrices corresponding to the horizon 
-%    A_check = [eye(3);
-%              A;
-%              A^2;
-%              A^3;
-%              A^4];
-%    
-%    zr = zeros(3,2);
-%    B_check = [zr, zr, zr, zr, zr;
-%              B, zr, zr, zr, zr;
-%              A*B, B, zr, zr, zr;
-%              A^2*B, A*B, B, zr, zr;
-%              A^3*B, A^2*B, A*B, B, zr];
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:, k)));
@@ -93,25 +74,3 @@ figure(3);
 plot(ref_x' - res_x');
 title('Error');
 legend('err of x pos','error of y pos', 'error of heading');
-
-function B_completed = apply_power(A, B, mat)
-    B_completed = [];
-    sz = size(mat);
-    for i = 1:sz(1)
-        B_row = [];
-        for j = 1:sz(2)
-            B_row = [B_row, power_of_A_B(A, mat(i,j), B)];
-        end
-        B_completed = [B_completed; B_row];
-    end
-end
-
-function A_dot = power_of_A_B(A, power, B)
-    if power < 0
-        A_dot = zeros(3, 2);
-    elseif power == 0
-        A_dot = B;
-    else
-        A_dot = (A^power)*B;
-    end
-end
