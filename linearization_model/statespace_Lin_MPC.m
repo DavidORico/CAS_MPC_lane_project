@@ -1,19 +1,5 @@
 function [AM,BM,Q,R,a,b] = statespace_Lin_MPC(ref_u,ref_x,k,N,T)
 %Main function
-%% Initialising variables
-sympref('FloatingPointOutput',true)
-syms v; syms delta; syms theta;
-syms x;syms y;
-L = 2;
-
-%% Jacobians
-
-states = [x; y; theta];
-controls = [v;delta];
-z = [v*cos(theta);v*sin(theta);(v/L)*tan(delta)];
-A = jacobian(z,[x,y,theta]); %Continuous-time state-space
-B = jacobian(z,[v,delta]); %Continuous-time state-space
-
 %% Euler discretisation and MPC-matrices
 
 a = []; b = [];

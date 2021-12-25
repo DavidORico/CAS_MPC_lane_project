@@ -1,8 +1,6 @@
 %Defining the reference tracking linearised RHS by Taylor expansion around
 %reference
 function [A,B] = Linearisation(ref_x, ref_u,k,T)
-syms v; syms delta;
-syms theta; syms x; syms y;
 L = 2;
 %% Jacobian of discrete kinematics
 % z = [x+v*cos(theta)*T;y+v*sin(theta)*T;theta+(v/L)*tan(delta)*T];
