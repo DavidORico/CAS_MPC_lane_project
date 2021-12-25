@@ -11,7 +11,8 @@ num_iterations = 500;
 %create reference trajectory
 % x = [-1 -1 0]';
 % num_reference_points=150;
-% ref_speed = zeros(1, num_reference_points) + 0.37;
+% Euler spiral
+% ref_speed = zeros(1, num_reference_points) + 1.0;
 % ref_angle = sin(linspace(-pi, pi, num_reference_points));
 % ref_u = [ref_speed; ref_angle];
 % ref_x = zeros(3, num_reference_points);
@@ -26,10 +27,40 @@ num_iterations = 500;
 %    ref_x(:, k) = x;
 %    x = A*x + B*ref_u(:, k);
 % end
-% figure(1);
-% plot(ref_x(1,:), ref_x(2, :));
-% title('Comparing Paths');
-% hold on;
+% Sharp turn
+% ref_speed = zeros(1, num_reference_points) + 1.0;
+% ref_angle = [zeros(1, num_reference_points/3), 
+%              zeros(1, num_reference_points/3)+(pi/6), 
+%              zeros(1, num_reference_points/3)];
+% ref_u = [ref_speed; ref_angle];
+% ref_x = zeros(3, num_reference_points);
+% for k = 1:num_reference_points
+%    [A,B] = Linearisation(x, ref_u(:, k),1,T);
+%    %A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
+%    %     0 1 ref_speed(k)*cos(ref_angle(k))*T;
+%    %     0 0 1];
+%    %B = [cos(ref_angle(k))*T 0;
+%    %     sin(ref_angle(k))*T 0;
+%    %     0 T];
+%    ref_x(:, k) = x;
+%    x = A*x + B*ref_u(:, k);
+% end
+% Wave
+% ref_speed = zeros(1, num_reference_points) + 1.0;
+% ref_angle = linspace(-pi/4, pi/4, num_reference_points);
+% ref_u = [ref_speed; ref_angle];
+% ref_x = zeros(3, num_reference_points);
+% for k = 1:num_reference_points
+%    [A,B] = Linearisation(x, ref_u(:, k),1,T);
+%    %A = [1 0 -ref_speed(k)*sin(ref_angle(k))*T;
+%    %     0 1 ref_speed(k)*cos(ref_angle(k))*T;
+%    %     0 0 1];
+%    %B = [cos(ref_angle(k))*T 0;
+%    %     sin(ref_angle(k))*T 0;
+%    %     0 T];
+%    ref_x(:, k) = x;
+%    x = A*x + B*ref_u(:, k);
+% end
 
 res_x = [];
 res_u = [];
