@@ -3,8 +3,8 @@ clear all
 %basic parameters
 T = 0.1;
 N = 5;
-u_max = [0.47;
-        3.77];
+u_max = [4;
+         pi/4];
 u_min = -u_max;
 
 %create reference trajectory
@@ -45,7 +45,7 @@ for k = 1:num_reference_points
    for c = 1:4:N*4-3
        constraints_l(c:c+3, ((c-1)/4)*2+1:((c-1)/4)*2+2) = constraints_l_p;
    end
-   constraints_r = [0.47; 0.47; 3.77; 3.77];
+   constraints_r = [u_max(1, 1); u_max(1, 1); u_max(2, 1); u_max(2, 1)];
    final_r = [];
    for c =1:N
        final_r = [final_r ; constraints_r];
