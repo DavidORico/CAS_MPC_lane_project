@@ -69,12 +69,20 @@ my_test_lap(:, 14) = res_u(2,:)';
 
 %plotting the reference path and the path taken
 figure(1);
-plot(ref_x(1,:), ref_x(2, :));
+ref_plot = plot(ref_x(1,:), ref_x(2, :));
 title('Comparing Paths');
 hold on;
-plot(res_x(1,:), res_x(2, :));
+res_plot = plot(res_x(1,:), res_x(2, :));
+legend([ref_plot res_plot],{'reference path','result path'},'AutoUpdate','off')
+len = 2;
+end_points = [ref_x(1,:)+len*cos(ref_x(3,:));
+              ref_x(2,:)+len*sin(ref_x(3,:))];
+for k = 1:num_iterations
+    plot([ref_x(1,k) end_points(1,k)],[ref_x(2,k) end_points(2,k)])
+end
 hold off;
-legend('reference path','result path');
+
+%plotting inputs to the system
 figure(2)
 plot(res_u(1,:));
 title('Inputs - u');
