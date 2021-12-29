@@ -1,13 +1,13 @@
 clear all
 %basic parameters
 T = 0.04;
-N = 20;
+N = 10;
 u_max_const = [40;
               pi/2-0.2];
 u_min_const = [2;
                pi/2-0.2];
 
-load octavia_testlap.mat;
+load testlap.mat;
 my_test_lap = test_lap;
 sz  = size(test_lap);
 num_iterations = sz(1,1);
@@ -30,18 +30,47 @@ ref_x = [test_lap(:, 2)';
 ref_u = [test_lap(:, 80)';
          test_lap(:, 14)'];
 x = ref_x(:, 1);
-tic
-for k = 1:num_iterations
+
+% tic
+% for k = 1:num_iterations
+%    %% update the A and B matrix
+%    [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),1,N,T);
+%    %% calculate u_min using quadprog
+%    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
+%    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
+% %    if N+k < num_iterations
+% %        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,N+k)));
+% %    else
+% %        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
+% %    end
+%    
+%    constraints_l = zeros(N*2*2, N*2);
+%    constraints_l_p = [1 0; -1 0; 0 1; 0 -1];
+%    for c = 1:4:N*4-3
+%        constraints_l(c:c+3, ((c-1)/4)*2+1:((c-1)/4)*2+2) = constraints_l_p;
+%    end
+%    constraints_r = [u_max_const(1, 1); u_min_const(1, 1); u_max_const(2, 1); u_min_const(2, 1)];
+%    final_r = [];
+%    for c =1:N
+%        final_r = [final_r ; constraints_r];
+%    end
+%    u_quad = quadprog(H, f, constraints_l, final_r);
+%    u_min = u_quad(1:2, 1);
+%    %% go to next step
+%    x = A*x + B*u_min;
+%    res_x = [res_x, x];
+%    res_u = [res_u, u_min];
+% end
+% toc
+max_err_corrections = 20;
+curr_err_corrections = 0;
+k = 1;
+while 1
    %% update the A and B matrix
    [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),1,N,T);
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-%    if N+k < num_iterations
-%        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,N+k)));
-%    else
-%        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-%    end
    
    constraints_l = zeros(N*2*2, N*2);
    constraints_l_p = [1 0; -1 0; 0 1; 0 -1];
@@ -53,19 +82,29 @@ for k = 1:num_iterations
    for c =1:N
        final_r = [final_r ; constraints_r];
    end
-   u_quad = quadprog(H, f, constraints_l, final_r);
+   options = optimset('Display','off');
+   u_quad = quadprog(H, f, constraints_l, final_r,[],[],[],[],[],options);
    u_min = u_quad(1:2, 1);
    %% go to next step
    x = A*x + B*u_min;
    res_x = [res_x, x];
    res_u = [res_u, u_min];
+   %% check error
+   err = norm(ref_x(:,k) - x,2);
+   treshold = 2;
+   if k >= num_iterations
+       break;
+   elseif err < treshold || curr_err_corrections >= max_err_corrections
+       k = k + 1;
+       curr_err_corrections = 0;
+   elseif err >= treshold
+       curr_err_corrections = curr_err_corrections + 1;
+   end
 end
-toc
-
 %modify the original path with the resulting MPC controlled path
-my_test_lap(:, 2:3) = res_x(1:2,:)';
-my_test_lap(:, 80) = res_u(1,:)';
-my_test_lap(:, 14) = res_u(2,:)';
+% my_test_lap(:, 2:3) = res_x(1:2,:)';
+% my_test_lap(:, 80) = res_u(1,:)';
+% my_test_lap(:, 14) = res_u(2,:)';
 
 %plotting the reference path and the path taken
 figure(1);
@@ -74,12 +113,12 @@ title('Comparing Paths');
 hold on;
 res_plot = plot(res_x(1,:), res_x(2, :));
 legend([ref_plot res_plot],{'reference path','result path'},'AutoUpdate','off')
-len = 2;
-end_points = [ref_x(1,:)+len*cos(ref_x(3,:));
-              ref_x(2,:)+len*sin(ref_x(3,:))];
-for k = 1:num_iterations
-    plot([ref_x(1,k) end_points(1,k)],[ref_x(2,k) end_points(2,k)])
-end
+% len = 2;
+% end_points = [ref_x(1,:)+len*cos(ref_x(3,:));
+%               ref_x(2,:)+len*sin(ref_x(3,:))];
+% for k = 1:num_iterations
+%     plot([ref_x(1,k) end_points(1,k)],[ref_x(2,k) end_points(2,k)])
+% end
 hold off;
 
 %plotting inputs to the system
@@ -91,7 +130,7 @@ plot(res_u(2,:));
 hold off;
 legend('velocity','steering angle');
 %plot error
-figure(3);
-plot(abs(ref_x' - res_x'));
-title('Error');
-legend('err of x pos','error of y pos', 'error of heading');
+% figure(3);
+% plot(abs(ref_x' - res_x'));
+% title('Error');
+% legend('err of x pos','error of y pos', 'error of heading');
