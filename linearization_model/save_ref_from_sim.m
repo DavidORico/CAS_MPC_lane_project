@@ -33,10 +33,11 @@ x = ref_x(:, 1);
 
 max_err_corrections = 20;
 curr_err_corrections = 0;
+treshold = 2;
 k = 1;
 while 1
    %% update the A and B matrix
-   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),1,N,T);
+   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),N,T);
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
@@ -51,7 +52,6 @@ while 1
    res_u = [res_u, u_min];
    %% check error
    err = norm(ref_x(:,k) - x,2);
-   treshold = 2;
    if k >= num_iterations
        break;
    elseif err < treshold || curr_err_corrections >= max_err_corrections
