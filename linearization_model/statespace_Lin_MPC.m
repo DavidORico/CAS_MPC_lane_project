@@ -1,4 +1,4 @@
-function [AM,BM,Q,R,a,b] = statespace_Lin_MPC(ref_u,ref_x,k,N,T)
+function [AM,BM,Q,R,a,b] = statespace_Lin_MPC(ref_u,ref_x,N,T)
 %Main function
 %% Euler discretisation and MPC-matrices
 
@@ -7,7 +7,7 @@ BM = []; % Expanded B-matrix
 vq = [1 1 0.5]; q = diag(vq); vr = [0.1 0.1]; r = diag(vr);
 Q = [];
 R = [];
-[a,b] = Linearisation(ref_x, ref_u,k,T); %discretised state-space A/B
+[a,b] = Linearisation(ref_x, ref_u,T); %discretised state-space A/B
 B0 = zeros(size(b));
 BR =cell(1,N);
 AM = eye(size(a)); % Expanded A-matrix

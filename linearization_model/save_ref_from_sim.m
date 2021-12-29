@@ -1,12 +1,12 @@
 clear all
 %basic parameters
 T = 0.04;
-N = 10;
+N = 5;
 u_max_const = [40;
               pi/2-0.2];
 u_min_const = [2;
                pi/2-0.2];
-
+u_max_rate_change = [0.3; pi/4-0.2];
 load testlap.mat;
 my_test_lap = test_lap;
 sz  = size(test_lap);
@@ -30,68 +30,28 @@ ref_x = [test_lap(:, 2)';
 ref_u = [test_lap(:, 80)';
          test_lap(:, 14)'];
 x = ref_x(:, 1);
-
-% tic
-% for k = 1:num_iterations
-%    %% update the A and B matrix
-%    [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),1,N,T);
-%    %% calculate u_min using quadprog
-%    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
-%    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-% %    if N+k < num_iterations
-% %        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,N+k)));
-% %    else
-% %        f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-% %    end
-%    
-%    constraints_l = zeros(N*2*2, N*2);
-%    constraints_l_p = [1 0; -1 0; 0 1; 0 -1];
-%    for c = 1:4:N*4-3
-%        constraints_l(c:c+3, ((c-1)/4)*2+1:((c-1)/4)*2+2) = constraints_l_p;
-%    end
-%    constraints_r = [u_max_const(1, 1); u_min_const(1, 1); u_max_const(2, 1); u_min_const(2, 1)];
-%    final_r = [];
-%    for c =1:N
-%        final_r = [final_r ; constraints_r];
-%    end
-%    u_quad = quadprog(H, f, constraints_l, final_r);
-%    u_min = u_quad(1:2, 1);
-%    %% go to next step
-%    x = A*x + B*u_min;
-%    res_x = [res_x, x];
-%    res_u = [res_u, u_min];
-% end
-% toc
+u = ref_u(:, 1);
 max_err_corrections = 20;
 curr_err_corrections = 0;
+treshold = 2;
 k = 1;
 while 1
    %% update the A and B matrix
-   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),1,N,T);
+   [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),N,T);
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
+   [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change);
    
-   constraints_l = zeros(N*2*2, N*2);
-   constraints_l_p = [1 0; -1 0; 0 1; 0 -1];
-   for c = 1:4:N*4-3
-       constraints_l(c:c+3, ((c-1)/4)*2+1:((c-1)/4)*2+2) = constraints_l_p;
-   end
-   constraints_r = [u_max_const(1, 1); u_min_const(1, 1); u_max_const(2, 1); u_min_const(2, 1)];
-   final_r = [];
-   for c =1:N
-       final_r = [final_r ; constraints_r];
-   end
    options = optimset('Display','off');
-   u_quad = quadprog(H, f, constraints_l, final_r,[],[],[],[],[],options);
-   u_min = u_quad(1:2, 1);
+   u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
+   u = u_quad(1:2, 1);
    %% go to next step
-   x = A*x + B*u_min;
+   x = A*x + B*u;
    res_x = [res_x, x];
-   res_u = [res_u, u_min];
+   res_u = [res_u, u];
    %% check error
    err = norm(ref_x(:,k) - x,2);
-   treshold = 2;
    if k >= num_iterations
        break;
    elseif err < treshold || curr_err_corrections >= max_err_corrections
