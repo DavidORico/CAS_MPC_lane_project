@@ -3,11 +3,11 @@ clear all
 %basic parameters
 T = 0.1;
 N = 5;
-u_max_const = [4;
-         pi/4];
+u_max_const = [4; pi/4];
 u_min_const = u_max_const;
+u_max_rate_change = [0.5; 0.2];
 num_iterations = 210;
-type_of_ref = 'wave';
+type_of_ref = 'spiral';
 
 %create reference trajectory
 x = [-1 -1 0]';
@@ -52,7 +52,7 @@ end
 res_x = [];
 res_u = [];
 x = ref_x(:, 1);
-
+u = ref_u(:, 1);
 max_err_corrections = 20;
 curr_err_corrections = 0;
 treshold = 2;
@@ -63,15 +63,15 @@ while 1
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-   [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const);
+   [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change);
    
    options = optimset('Display','off');
    u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
-   u_min = u_quad(1:2, 1);
+   u = u_quad(1:2, 1);
    %% go to next step
-   x = A*x + B*u_min;
+   x = A*x + B*u;
    res_x = [res_x, x];
-   res_u = [res_u, u_min];
+   res_u = [res_u, u];
    %% check error
    err = norm(ref_x(:,k) - x,2);
    if k >= num_iterations
