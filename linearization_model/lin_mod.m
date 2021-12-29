@@ -3,19 +3,19 @@ clear all
 %basic parameters
 T = 0.1;
 N = 5;
-u_max_const = [4; pi/4];
+u_max_const = [12; pi/2];
 u_min_const = u_max_const;
 u_max_rate_change = [0.5; 0.2];
 num_iterations = 210;
-type_of_ref = 'spiral';
+type_of_ref = 'turn';
 
 %create reference trajectory
 x = [-1 -1 0]';
 ref_u = [];
 ref_x = [];
-
+global_xy = [];
 if strcmp(type_of_ref, 'spiral')
-    % Euler spiral
+    %Euler spiral
     ref_speed = zeros(1, num_iterations) + 1.0;
     ref_angle = sin(linspace(-pi, pi, num_iterations));
     ref_u = [ref_speed; ref_angle];
@@ -25,29 +25,22 @@ if strcmp(type_of_ref, 'spiral')
        ref_x(:, k) = x;
        x = A*x + B*ref_u(:, k);
     end
+    global_xy = ref_x(1:2,:);
 elseif strcmp(type_of_ref, 'turn')
     % Sharp turn
-    ref_speed = zeros(1, num_iterations) + 1.0;
-    ref_angle = [zeros(1, num_iterations/3), zeros(1, num_iterations/3)+(pi/5), zeros(1, num_iterations/3)];
-    ref_u = [ref_speed; ref_angle];
-    ref_x = zeros(3, num_iterations);
-    for k = 1:num_iterations
-       [A,B] = Linearisation(x, ref_u(:, k),T);
-       ref_x(:, k) = x;
-       x = A*x + B*ref_u(:, k);
-    end
-elseif strcmp(type_of_ref, 'wave')
+    global_xy = [1:num_iterations/2, zeros(1,num_iterations/2)+num_iterations/2;
+                 zeros(1,num_iterations/2), 1:num_iterations/2];
+elseif strcmp(type_of_ref, 'sin')
     % Wave
-    ref_speed = zeros(1, num_iterations) + 1.0;
-    ref_angle = linspace(-pi/4, pi/4, num_iterations);
-    ref_u = [ref_speed; ref_angle];
-    ref_x = zeros(3, num_iterations);
-    for k = 1:num_iterations
-       [A,B] = Linearisation(x, ref_u(:, k),T);
-       ref_x(:, k) = x;
-       x = A*x + B*ref_u(:, k);
-    end
+    global_xy = [1:num_iterations;
+                sin(linspace(-pi, pi, num_iterations))];
+elseif strcmp(type_of_ref, 'straight')
+    % straight path
+    global_xy = [1:num_iterations;
+                1:num_iterations];
 end
+
+[ref_x, ref_u] = Reference_generator(global_xy,T);
 
 res_x = [];
 res_u = [];
@@ -67,6 +60,7 @@ while 1
    
    options = optimset('Display','off');
    u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
+   %u_quad = quadprog(H, f, constraints_l, constraints_r);
    u = u_quad(1:2, 1);
    %% go to next step
    x = A*x + B*u;

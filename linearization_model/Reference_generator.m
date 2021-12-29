@@ -1,43 +1,43 @@
+function [ref_x,ref_u] = Reference_generator(global_xy, T)
 %Reference_generator (theta,v, delta)
-ref_xy = [1 4 3 -5 -3 5; -3 4 2 -3.2 -7 10];
-T = 0.04;
 L = 2;
-Lfw = 1;    %corresponds to distance from the trajectory
+Lfw = 2;    %corresponds to distance from the trajectory
 theta = [];
-[a,b] = size(ref_xy);
+[a,b] = size(global_xy);
 ref_x = [];
 ref_u = zeros(a,b);
 %required: Local angles and steering angle/rate
 %% Local angles
 for k=1:b
     if k < b
-       theta = [theta, acos(dot(ref_xy(:,k),ref_xy(:,k+1))/(norm(ref_xy(:,k))*norm(ref_xy(:,k+1))))];
+       theta = [theta, acos(dot(global_xy(:,k),global_xy(:,k+1))/(norm(global_xy(:,k))*norm(global_xy(:,k+1))))];
     else
         theta = [theta,0];
     end
 end
-ref_x = [ref_xy;theta];
+ref_x = real([global_xy;theta]);
 %% Steering angle
 for k = 1:b
     if k < b
         delta = -atan((L*sin(ref_x(3,k+1)))/((Lfw/2)+Lfw*cos(ref_x(3,k+1))));
-        ref_u(2,k) = delta;
+        ref_u(2,k) = real(delta);
     else
         delta = 0;
     end
 end
 %% Reference velocity
-Vr = 10;
+Vr = 1;
 %P-controller
-Kp = 0.05;
+Kp = 0.005;
 for k = 1:b
     if k < b
-        distancetonext = norm(ref_xy(:,k+1)-ref_xy(:,k),2);
+        distancetonext = norm(global_xy(:,k+1)-global_xy(:,k),2);
     else
         distancetonext = 0;
     end
     velocity = distancetonext/T;
-    ref_u(1,k) = abs(velocity-(ref_u(1,k)))*Kp+Vr;
+    ref_u(1,k) = real(abs(velocity-(ref_u(1,k)))*Kp+Vr);
+end
 end
         
  

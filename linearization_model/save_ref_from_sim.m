@@ -7,34 +7,21 @@ u_max_const = [40;
 u_min_const = [2;
                pi/2-0.2];
 u_max_rate_change = [0.3; pi/4-0.2];
+%u_max_rate_change = u_max_const;
 load testlap.mat;
-my_test_lap = test_lap;
 sz  = size(test_lap);
 num_iterations = sz(1,1);
 
-% get theta
-theta = [];
-for k = 1:num_iterations
-    rotm = [test_lap(k, 5), test_lap(k, 6), test_lap(k, 7);
-            test_lap(k, 8), test_lap(k, 9), test_lap(k, 10);
-            test_lap(k, 11), test_lap(k, 12), test_lap(k, 13)];
-    eulZYX = rotm2eul(rotm);
-    theta = [theta, eulZYX(1,1)];
-end
-
 res_x = [];
 res_u = [];
-ref_x = [test_lap(:, 2)';
-         test_lap(:, 3)';
-         theta];
-ref_u = [test_lap(:, 80)';
-         test_lap(:, 14)'];
+[ref_x, ref_u] = Reference_generator([test_lap(:, 2)';test_lap(:, 3)'], T);
 x = ref_x(:, 1);
 u = ref_u(:, 1);
 max_err_corrections = 20;
 curr_err_corrections = 0;
 treshold = 2;
 k = 1;
+my_test_lap = [];
 while 1
    %% update the A and B matrix
    [A_spec,B_dash,Q_spec,R_spec,A,B] = statespace_Lin_MPC(ref_u(:,k),ref_x(:,k),N,T);
@@ -46,6 +33,11 @@ while 1
    options = optimset('Display','off');
    u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
    u = u_quad(1:2, 1);
+   %% save to file for simulation
+   my_test_lap = [my_test_lap; test_lap(k,:)];
+   my_test_lap(end,2:3) = x(1:2,:)';
+   my_test_lap(end,80) = u(1,:);
+   my_test_lap(end,14) = u(2,:);
    %% go to next step
    x = A*x + B*u;
    res_x = [res_x, x];
@@ -94,3 +86,5 @@ legend('velocity','steering angle');
 % plot(abs(ref_x' - res_x'));
 % title('Error');
 % legend('err of x pos','error of y pos', 'error of heading');
+
+save('my_test_lap.mat','my_test_lap');
