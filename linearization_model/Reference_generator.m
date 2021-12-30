@@ -1,7 +1,7 @@
 function [ref_x_outer,ref_u,curvature_radius] = Reference_generator(global_xy, T)
 %Reference_generator (theta,v, delta)
 L = 2.5;
-Lfw = 2;    %corresponds to looking distance from the trajectory
+Lfw = 3;    %corresponds to looking distance from the trajectory
 WL = 4; %Width of a lane;
 theta = [];
 [x_inner, y_inner, x_outer, y_outer, curvature_radius] = parallel_curve(global_xy(1,:), global_xy(2,:), WL/2,0,0);
@@ -29,7 +29,7 @@ for k = 1:b
     end
 end
 %% Reference velocity
-Vr = 1;
+Vr = 5;
 %P-controller
 Kp = 0.005;
 for k = 1:b

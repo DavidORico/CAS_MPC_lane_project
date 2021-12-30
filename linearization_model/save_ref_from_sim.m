@@ -1,7 +1,7 @@
 clear all
 %basic parameters
 T = 0.04;
-N = 5;
+N = 20;
 u_max_const = [40;
               pi/2-0.2];
 u_min_const = [2;
@@ -14,7 +14,14 @@ num_iterations = sz(1,1);
 
 res_x = [];
 res_u = [];
+middle_road_ref = [test_lap(:, 2)';test_lap(:, 3)'];
 [ref_x, ref_u] = Reference_generator([test_lap(:, 2)';test_lap(:, 3)'], T);
+for k = 1:50
+    ref_x(1:2,k) = [test_lap(1, 2);test_lap(1, 3)];
+    ref_u(:,k) = [test_lap(1,80);test_lap(1,14)];
+end
+ref_x(:,1) = [test_lap(1,2);test_lap(1,3);0];
+ref_u(:,1) = [5;test_lap(1,14)];
 x = ref_x(:, 1);
 u = ref_u(:, 1);
 max_err_corrections = 20;
@@ -28,8 +35,11 @@ while 1
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-   [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change);
-   
+   if k == 1
+       [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change,x,middle_road_ref(:,k),middle_road_ref(:,k+1));
+   else
+       [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change,x,middle_road_ref(:,k-1),middle_road_ref(:,k));
+   end
    options = optimset('Display','off');
    u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
    u = u_quad(1:2, 1);
@@ -47,7 +57,7 @@ while 1
    if k >= num_iterations
        break;
    elseif err < treshold || curr_err_corrections >= max_err_corrections
-       k = k + 1;
+       k = k + 1
        curr_err_corrections = 0;
    elseif err >= treshold
        curr_err_corrections = curr_err_corrections + 1;
