@@ -2,12 +2,12 @@
 clear all
 %basic parameters
 T = 0.1;
-N = 5;
+N = 20;
 u_max_const = [12; pi/2];
 u_min_const = u_max_const;
 u_max_rate_change = [0.5; 0.2];
 num_iterations = 210;
-type_of_ref = 'turn';
+type_of_ref = 'sin';
 
 %create reference trajectory
 x = [-1 -1 0]';
@@ -16,16 +16,10 @@ ref_x = [];
 global_xy = [];
 if strcmp(type_of_ref, 'spiral')
     %Euler spiral
-    ref_speed = zeros(1, num_iterations) + 1.0;
-    ref_angle = sin(linspace(-pi, pi, num_iterations));
-    ref_u = [ref_speed; ref_angle];
-    ref_x = zeros(3, num_iterations);
-    for k = 1:num_iterations
-       [A,B] = Linearisation(x, ref_u(:, k),T);
-       ref_x(:, k) = x;
-       x = A*x + B*ref_u(:, k);
-    end
-    global_xy = ref_x(1:2,:);
+    load euler_spiral_xy.mat data_xy
+    global_xy = data_xy;
+    global_xy(:,1) = [0.001; 0.001];
+    num_iterations = 1001;
 elseif strcmp(type_of_ref, 'turn')
     % Sharp turn
     global_xy = [1:num_iterations/2, zeros(1,num_iterations/2)+num_iterations/2;
