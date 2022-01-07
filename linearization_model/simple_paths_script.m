@@ -42,6 +42,7 @@ x = ref_x(:, 1);
 u = ref_u(:, 1);
 max_err_corrections = 20;
 curr_err_corrections = 0;
+
 treshold = 2;
 k = 1;
 while 1
@@ -50,7 +51,7 @@ while 1
    %% calculate u_min using quadprog
    H = double(2*(B_dash'*Q_spec*B_dash + R_spec));
    f = double(2*B_dash'*Q_spec*A_spec*(x-ref_x(:,k)));
-   [constraints_l,constraints_r] = get_constraints(N,u_max_const,u_min_const,u,u_max_rate_change);
+   [constraints_l,constraints_r] = get_constraints_simple(N,u_max_const,u_min_const,u,u_max_rate_change);
    
    options = optimset('Display','off');
    u_quad = quadprog(H, f, constraints_l, constraints_r,[],[],[],[],[],options);
